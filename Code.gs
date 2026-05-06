@@ -37,6 +37,39 @@ function setupSheet() {
   Logger.log("表頭建立完成：" + SHEET_NAME);
 }
 
+/* ---------- 學號 → 班級推斷（同前端規則） ---------- */
+function inferDeptFromStudentId_(sid) {
+  if (!/^\d{6}$/.test(String(sid || ""))) return null;
+  const s = String(sid);
+  const grade = { "2": "三", "3": "二", "4": "一" }[s[0]];
+  const dept  = { "1": "商", "2": "資處", "3": "觀", "4": "餐", "5": "幼", "6": "美", "7": "電", "8": "資訊", "9": "影" }[s[2]];
+  if (!grade || !dept) return null;
+  return dept + grade;
+}
+
+/* ---------- 班級正規化（伺服器端，最終把關） ---------- */
+function normalizeClass_(cls) {
+  if (!cls) return "";
+  return String(cls)
+    .replace(/^高[一二三12]?/, "")
+    .replace(/ㄧ/g, "一")
+    .replace(/2/g, "二").replace(/1/g, "一").replace(/3/g, "三")
+    .replace(/^幼保(?=[一二三])/, "幼")
+    .replace("商科", "商三")
+    .replace(/(商|餐|幼|美|資處|資訊|觀|電|影)([一二三])終/, "$1$2忠")
+    .trim();
+}
+
+/* ---------- 重複偵測：同學號+同活動 ---------- */
+function isDuplicateSubmission_(sheet, studentId, activityId) {
+  const last = sheet.getLastRow();
+  if (last < 2) return false;
+  const data = sheet.getRange(2, 1, last - 1, HEADERS.length).getValues();
+  const colA = HEADERS.indexOf("活動ID");
+  const colS = HEADERS.indexOf("學號");
+  return data.some(r => String(r[colS]) === String(studentId) && String(r[colA]) === String(activityId));
+}
+
 /* ---------- 處理家長 POST 送出 ---------- */
 function doPost(e) {
   try {
@@ -50,6 +83,44 @@ function doPost(e) {
       sh.setFrozenRows(1);
     }
 
+    /* ---------- 伺服器端驗證 + 正規化 ---------- */
+    // 1. 學號格式
+    if (!/^\d{6}$/.test(String(data.student_id || ""))) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, message: "學號格式錯誤：請填寫 6 位數字。" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    // 2. 家長姓名 ≠ 學生姓名
+    if (data.parent_name && data.student_name && String(data.parent_name).trim() === String(data.student_name).trim()) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, message: "家長姓名不可與學生姓名相同，請由家長親自填寫。" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    // 3. 班級正規化（去掉「高X」、注音→國字、錯字）
+    const normCls = normalizeClass_(data.class);
+    if (!normCls) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, message: "班級欄位不可為空。" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    // 4. 班級與學號科別是否一致
+    const expected = inferDeptFromStudentId_(data.student_id);
+    if (expected) {
+      const isAmbigZ = /^資[一二三]/.test(normCls) && !normCls.startsWith("資處") && !normCls.startsWith("資訊");
+      const isExpZ   = expected.indexOf("資處") === 0 || expected.indexOf("資訊") === 0;
+      if (!normCls.startsWith(expected) && !(isAmbigZ && isExpZ)) {
+        return ContentService
+          .createTextOutput(JSON.stringify({ ok: false, message: `班級「${data.class}」與學號 ${data.student_id} 推斷的「${expected}」不一致。` }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+    // 5. 重複提交檢查（同學號 + 同活動）
+    if (isDuplicateSubmission_(sh, data.student_id, data.activity_id)) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, message: "您已經提交過本活動的同意書，請勿重複簽核。如需更正請聯絡學務處。" }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     const sigUrl = saveSignature(data.signature_image, data.activity_id, data.student_id, data.student_name);
     const ts     = Utilities.formatDate(new Date(), "Asia/Taipei", "yyyy-MM-dd HH:mm:ss");
     const ip     = (e.parameter && e.parameter.ip) || "";
@@ -58,7 +129,7 @@ function doPost(e) {
       ts,
       data.activity_id       || "",
       data.activity_name     || "",
-      data.class             || "",
+      normCls,
       data.seat              || "",
       data.student_id        || "",
       data.student_name      || "",
@@ -78,7 +149,7 @@ function doPost(e) {
     sh.appendRow(row);
 
     return ContentService
-      .createTextOutput(JSON.stringify({ ok: true, message: "簽核完成" }))
+      .createTextOutput(JSON.stringify({ ok: true, message: "簽核完成", normalizedClass: normCls }))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
     Logger.log("doPost error: " + err);
