@@ -119,12 +119,13 @@ function doPost(e) {
             .setMimeType(ContentService.MimeType.JSON);
         }
       }
-      // 5. 重複提交檢查（同學號 + 同活動）
-      if (isDuplicateSubmission_(sh, data.student_id, data.activity_id)) {
-        return ContentService
-          .createTextOutput(JSON.stringify({ ok: false, message: "您已經提交過本活動的同意書，請勿重複簽核。如需更正請聯絡學務處。" }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
+      // 5. 重複提交檢查 — 已暫時停用以允許家長補填親友資訊
+      //    舊資料保留為歷史，後續以 mergeDuplicates() 一鍵合併（保留最新版）
+      // if (isDuplicateSubmission_(sh, data.student_id, data.activity_id)) {
+      //   return ContentService
+      //     .createTextOutput(JSON.stringify({ ok: false, message: "您已經提交過本活動的同意書，請勿重複簽核。如需更正請聯絡學務處。" }))
+      //     .setMimeType(ContentService.MimeType.JSON);
+      // }
     } else {
       /* ---------- A006 教職員工：簡化驗證 ---------- */
       if (!String(data.student_name || "").trim()) {
@@ -143,22 +144,8 @@ function doPost(e) {
           .createTextOutput(JSON.stringify({ ok: false, message: "聯絡手機格式錯誤：請填寫 09 開頭共 10 碼。" }))
           .setMimeType(ContentService.MimeType.JSON);
       }
-      // 教職員工以姓名+部門當作識別，避免重複報名
-      const last = sh.getLastRow();
-      if (last >= 2) {
-        const data2 = sh.getRange(2, 1, last - 1, HEADERS.length).getValues();
-        const colA = HEADERS.indexOf("活動ID");
-        const colN = HEADERS.indexOf("學生姓名");
-        const colC = HEADERS.indexOf("班級");
-        const dup = data2.some(r => String(r[colA]) === "A006"
-                                  && String(r[colN]).trim() === String(data.student_name).trim()
-                                  && String(r[colC]).trim() === normCls);
-        if (dup) {
-          return ContentService
-            .createTextOutput(JSON.stringify({ ok: false, message: "您已報名本活動，請勿重複送出。如需更正請聯絡學務處。" }))
-            .setMimeType(ContentService.MimeType.JSON);
-        }
-      }
+      // 教職員工重複偵測 — 已暫時停用以允許補填家屬資訊
+      // 舊資料保留為歷史，後續以 mergeDuplicates() 一鍵合併
     }
 
     const sigUrl = saveSignature(data.signature_image, data.activity_id, data.student_id, data.student_name);
@@ -228,4 +215,201 @@ function doGet() {
     "樹人家商 活動家長同意書 簽核 API 運作中 — " +
     Utilities.formatDate(new Date(), "Asia/Taipei", "yyyy-MM-dd HH:mm:ss")
   );
+}
+
+/* ================================================================
+   試算表選單：開啟時自動建立「🔧 系統管理」選單
+   ================================================================ */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu("🔧 系統管理")
+    .addItem("📊 統計各活動簽核人數",  "showActivityStats")
+    .addSeparator()
+    .addItem("🔍 預覽重複資料（不修改）", "previewDuplicates")
+    .addItem("🔄 合併重複資料（保留最新+親友資訊）", "mergeDuplicates")
+    .addSeparator()
+    .addItem("📦 將「已合併」舊列移至備份分頁", "archiveMergedRows")
+    .addToUi();
+}
+
+/* ---------- 取得所有資料列（含表頭索引） ---------- */
+function _getAllRows_() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return { sh: sh, rows: [], idx: {} };
+  const rng  = sh.getRange(1, 1, sh.getLastRow(), HEADERS.length);
+  const all  = rng.getValues();
+  const head = all[0];
+  const idx = {};
+  HEADERS.forEach(h => { idx[h] = head.indexOf(h); });
+  const rows = all.slice(1).map((r, i) => ({ rowNum: i + 2, data: r }));
+  return { sh: sh, rows: rows, idx: idx };
+}
+
+/* ---------- 產生分組鍵：學生用「學號+活動」、A006 用「姓名+部門+活動」 ---------- */
+function _groupKey_(row, idx) {
+  const aid = String(row.data[idx["活動ID"]] || "").trim();
+  if (aid === "A006") {
+    return `A006|${String(row.data[idx["學生姓名"]] || "").trim()}|${String(row.data[idx["班級"]] || "").trim()}`;
+  }
+  return `${aid}|${String(row.data[idx["學號"]] || "").trim()}`;
+}
+
+/* ---------- 統計各活動簽核人數（含親友統計） ---------- */
+function showActivityStats() {
+  const { rows, idx } = _getAllRows_();
+  const stats = {};   // {活動ID: {total, agree, accompany, accompanyPeople}}
+  rows.forEach(r => {
+    if (String(r.data[idx["狀態"]] || "").indexOf("已合併") >= 0) return; // 跳過舊版
+    const aid = String(r.data[idx["活動ID"]] || "").trim();
+    if (!aid) return;
+    if (!stats[aid]) stats[aid] = { total:0, agree:0, accompany:0, people:0 };
+    stats[aid].total++;
+    if (String(r.data[idx["同意意願"]] || "") === "同意") stats[aid].agree++;
+    if (String(r.data[idx["家長陪同"]] || "") === "是") {
+      stats[aid].accompany++;
+      const cntStr = String(r.data[idx["陪同人數"]] || "");
+      const m = cntStr.match(/(\d+)/);
+      stats[aid].people += m ? parseInt(m[1], 10) : 0;
+    }
+  });
+  let msg = "📊 各活動簽核統計（已扣除已合併舊版）\n\n";
+  Object.keys(stats).sort().forEach(aid => {
+    const s = stats[aid];
+    msg += `【${aid}】\n　簽核總數：${s.total}　同意：${s.agree}\n　親友陪同戶數：${s.accompany}　陪同總人數約：${s.people} 人\n\n`;
+  });
+  SpreadsheetApp.getUi().alert(msg);
+}
+
+/* ---------- 預覽重複資料（不修改） ---------- */
+function previewDuplicates() {
+  const { rows, idx } = _getAllRows_();
+  const groups = {};
+  rows.forEach(r => {
+    if (String(r.data[idx["狀態"]] || "").indexOf("已合併") >= 0) return;
+    const k = _groupKey_(r, idx);
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(r);
+  });
+  const dups = Object.entries(groups).filter(([_, arr]) => arr.length > 1);
+  if (dups.length === 0) {
+    SpreadsheetApp.getUi().alert("✓ 目前沒有重複資料。");
+    return;
+  }
+  let msg = `🔍 找到 ${dups.length} 組重複資料：\n\n`;
+  dups.slice(0, 20).forEach(([k, arr]) => {
+    msg += `【${k}】共 ${arr.length} 筆\n`;
+    arr.forEach(r => {
+      msg += `　第 ${r.rowNum} 列：${r.data[idx["簽核時間戳記"]]}　${r.data[idx["學生姓名"]]}　陪同：${r.data[idx["家長陪同"]] || "—"}\n`;
+    });
+    msg += "\n";
+  });
+  if (dups.length > 20) msg += `\n（僅顯示前 20 組，共 ${dups.length} 組）`;
+  msg += "\n按下「合併重複資料」可一鍵清理。";
+  SpreadsheetApp.getUi().alert(msg);
+}
+
+/* ---------- 合併重複資料：保留最新+親友資訊 ---------- */
+function mergeDuplicates() {
+  const ui = SpreadsheetApp.getUi();
+  const resp = ui.alert(
+    "確認執行合併？",
+    "將把同一人多筆簽核合併為一筆：\n" +
+    "• 主資料以「最新一筆」為準\n" +
+    "• 若舊筆有「家長陪同=是」、新筆=否，則保留「是」與陪同資訊\n" +
+    "• 舊筆會在「狀態」欄標記為「已合併到第 X 列」\n" +
+    "• 不刪除任何資料，僅標記。",
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (resp !== ui.Button.OK) return;
+
+  const { sh, rows, idx } = _getAllRows_();
+  const groups = {};
+  rows.forEach(r => {
+    if (String(r.data[idx["狀態"]] || "").indexOf("已合併") >= 0) return; // 跳過已處理
+    const k = _groupKey_(r, idx);
+    if (!groups[k]) groups[k] = [];
+    groups[k].push(r);
+  });
+
+  const tsCol = idx["簽核時間戳記"];
+  const accCol = idx["家長陪同"];
+  const accCntCol = idx["陪同人數"];
+  const accNamesCol = idx["陪同者姓名"];
+  const stateCol = idx["狀態"];
+
+  let mergedGroups = 0;
+  let markedRows   = 0;
+
+  Object.values(groups).forEach(arr => {
+    if (arr.length < 2) return;
+    // 依時間戳記排序，最新者在最後
+    arr.sort((a,b) => new Date(a.data[tsCol]) - new Date(b.data[tsCol]));
+    const latest = arr[arr.length - 1];
+
+    // 檢查舊筆是否有 親友資訊 比 latest 完整
+    if (String(latest.data[accCol] || "") !== "是") {
+      const acc = arr.slice(0, -1).reverse().find(r => String(r.data[accCol] || "") === "是");
+      if (acc) {
+        // 把舊筆的親友資訊複製到 latest
+        sh.getRange(latest.rowNum, accCol + 1).setValue(acc.data[accCol]);
+        sh.getRange(latest.rowNum, accCntCol + 1).setValue(acc.data[accCntCol]);
+        sh.getRange(latest.rowNum, accNamesCol + 1).setValue(acc.data[accNamesCol]);
+      }
+    }
+    // 將舊筆狀態改為「已合併」
+    arr.slice(0, -1).forEach(r => {
+      sh.getRange(r.rowNum, stateCol + 1).setValue(`已合併到第 ${latest.rowNum} 列`);
+      sh.getRange(r.rowNum, 1, 1, HEADERS.length).setBackground("#f3f4f6").setFontColor("#9ca3af");
+      markedRows++;
+    });
+    mergedGroups++;
+  });
+
+  ui.alert(`✓ 合併完成\n\n合併組數：${mergedGroups}\n標記為「已合併」的舊列數：${markedRows}\n\n（舊列以灰色淡化顯示但未刪除）`);
+}
+
+/* ---------- 將「已合併」舊列移至備份分頁 ---------- */
+function archiveMergedRows() {
+  const ui = SpreadsheetApp.getUi();
+  const resp = ui.alert(
+    "確認執行歸檔？",
+    "會把所有「狀態」為「已合併到第 X 列」的舊列搬到「歷史備份」分頁，主表只保留現行有效資料。",
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (resp !== ui.Button.OK) return;
+
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sh = ss.getSheetByName(SHEET_NAME);
+  let archive = ss.getSheetByName("歷史備份");
+  if (!archive) {
+    archive = ss.insertSheet("歷史備份");
+    archive.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]).setFontWeight("bold").setBackground("#9ca3af").setFontColor("#fff");
+    archive.setFrozenRows(1);
+  }
+
+  const last = sh.getLastRow();
+  if (last < 2) { ui.alert("無資料可歸檔。"); return; }
+  const all = sh.getRange(2, 1, last - 1, HEADERS.length).getValues();
+  const stateCol = HEADERS.indexOf("狀態");
+
+  const toArchive = [];
+  const toKeep    = [];
+  all.forEach(r => {
+    if (String(r[stateCol] || "").indexOf("已合併") >= 0) toArchive.push(r);
+    else toKeep.push(r);
+  });
+
+  if (toArchive.length === 0) { ui.alert("沒有「已合併」的列可歸檔。"); return; }
+
+  // 把 archived rows 寫到歷史備份
+  archive.getRange(archive.getLastRow() + 1, 1, toArchive.length, HEADERS.length).setValues(toArchive);
+
+  // 重寫主表：只保留有效列
+  sh.getRange(2, 1, last - 1, HEADERS.length).clearContent().setBackground(null).setFontColor(null);
+  if (toKeep.length > 0) {
+    sh.getRange(2, 1, toKeep.length, HEADERS.length).setValues(toKeep);
+  }
+
+  ui.alert(`✓ 歸檔完成\n\n搬到「歷史備份」：${toArchive.length} 列\n主表保留：${toKeep.length} 列`);
 }
