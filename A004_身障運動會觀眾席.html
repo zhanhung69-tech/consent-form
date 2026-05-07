@@ -67,7 +67,7 @@
     <h3>活動資訊</h3>
     <table class="info-table">
       <tr><th>活動類型</th><td>校外觀禮動員</td></tr>
-      <tr><th>活動日期</th><td>115 年 5 月 23 日（星期六）12:00-17:00（13:50 就位）</td></tr>
+      <tr><th>活動日期</th><td>115 年 5 月 23 日（星期六）典禮 <strong>14:00–17:30</strong>（學生 13:50 前就位）</td></tr>
       <tr><th>活動地點</th><td>新莊體育館</td></tr>
       <tr><th>參加對象</th><td>本校學生 350 位（僑生班整班 103 人 ＋ 各科動員 247 人）</td></tr>
       <tr><th>活動內容</th><td>擔任開幕式觀眾席動員，支援新北市政府體育局辦理之全國性賽事</td></tr>
@@ -77,6 +77,26 @@
       <tr><th>服裝提醒</th><td>請穿著運動服或學校制服；請提前 30 分鐘集合</td></tr>
       <tr><th>簽核截止</th><td style="color:#d93025;font-weight:600">115 年 5 月 18 日（星期一）23:59 前（活動前 5 日）</td></tr>
     </table>
+
+    <h3>🌟 開幕典禮資訊「無礙逐光初心閃耀群星夜」</h3>
+    <div style="background:#fffbeb;border:2px solid #f5b301;border-radius:8px;padding:14px;margin:8px 0 18px">
+      <p style="font-size:14px;color:#444;margin:0 0 10px">
+        結合音樂、表演藝術與舞臺視覺，打造一場融合「運動 × 共融」的盛會，<br>
+        讓更多人看見身障運動員的努力與價值 💗
+      </p>
+      <div style="background:#fff;border-radius:6px;padding:10px;font-size:14px">
+        <strong style="color:#7c2d12">🎤 群星夜卡司：</strong>
+        <ul style="margin:6px 0 0 18px;line-height:1.8">
+          <li><strong>Bii 畢書盡</strong>｜溫暖嗓音詮釋感動時刻</li>
+          <li><strong>周蕙 Where Chou</strong>｜療癒美聲直擊人心</li>
+          <li><strong>U:NUS</strong>｜新生代唱作能量爆發</li>
+          <li><strong>GENBLUE 幻藍小熊</strong>｜人氣女團活力登場</li>
+        </ul>
+      </div>
+      <p style="text-align:center;margin-top:10px;font-size:14.5px">
+        📅 <strong>5/23（六）14:00–17:30</strong>　📍 新莊體育館
+      </p>
+    </div>
 
     <div class="notes">
       <strong>重要須知：</strong>
@@ -137,6 +157,37 @@
           <label><input type="radio" name="transport" value="統一搭車往返" required> 統一搭車往返</label>
           <label><input type="radio" name="transport" value="自行往返"> 自行往返</label>
         </div>
+      </div>
+
+      <h3>親友陪同（選填）</h3>
+      <p style="font-size:13.5px;color:#555;margin-bottom:6px">
+        本活動為公開觀禮活動，歡迎家長／親友到場為孩子加油共襄盛舉，請填寫以下資訊以便安排座位。
+        <strong style="color:#047857">親友請於 5/23（六）13:30 至新莊體育館集合（集合位置屆時公告通知）；交通請自行安排。</strong>
+      </p>
+      <div class="field">
+        <label>是否有親友到場觀禮 <span class="req">*</span></label>
+        <div class="radio-group">
+          <label><input type="radio" name="parent_accompany" value="否" checked onclick="toggleAccompany(false)"> 否</label>
+          <label><input type="radio" name="parent_accompany" value="是" onclick="toggleAccompany(true)"> 是</label>
+        </div>
+      </div>
+      <div id="accompanyBlock" style="display:none;background:#ecfdf5;border-left:4px solid #047857;border-radius:6px;padding:12px;margin-top:8px">
+        <div class="row">
+          <div class="field">
+            <label>陪同人數</label>
+            <select name="accompany_count">
+              <option value="">請選擇</option>
+              <option>1 人</option><option>2 人</option><option>3 人</option><option>4 人</option><option>5 人以上</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>陪同者姓名與關係</label>
+            <input type="text" name="accompany_names" placeholder="例：王大明（父）、王李美（母）">
+          </div>
+        </div>
+        <p style="font-size:12.5px;color:#666;margin:0">
+          ※ 緊急聯絡電話將使用上方填寫之家長手機，無需重複填寫。
+        </p>
       </div>
 
       <h3>家長電子簽名</h3>

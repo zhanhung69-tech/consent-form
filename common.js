@@ -83,31 +83,48 @@ function clearSig() {
 
 /* ---------- 表單送出前驗證 ---------- */
 function validateForm(data) {
-  // 學號：6 位數字
-  if (!/^\d{6}$/.test(String(data.student_id || "").trim())) {
-    return { ok: false, err: "學號格式錯誤：請填寫 6 位數字（例：314020）。" };
+  // A006 教職員工：跳過學號／班級科系驗證，僅檢手機與必填
+  const isStaff = String(data.activity_id || "") === "A006";
+
+  if (!isStaff) {
+    // 學號：6 位數字
+    if (!/^\d{6}$/.test(String(data.student_id || "").trim())) {
+      return { ok: false, err: "學號格式錯誤：請填寫 6 位數字(例：314020)。" };
+    }
+    // 家長姓名 ≠ 學生姓名
+    const sn = String(data.student_name || "").trim();
+    const pn = String(data.parent_name  || "").trim();
+    if (sn && pn && sn === pn) {
+      return { ok: false, err: "家長姓名不可與學生姓名相同，請由家長親自填寫。" };
+    }
+    // 班級：去除前綴後不可為空
+    const normCls = normalizeClass(data.class);
+    if (!normCls) {
+      return { ok: false, err: "班級欄位請填寫完整(例：商二忠)。" };
+    }
+    // 班級科別與學號是否一致(學號→科年級)
+    const expected = inferDeptFromStudentId(data.student_id);
+    if (expected && !normCls.startsWith(expected) && !(/^資[一二三]/.test(normCls) && (expected.startsWith("資處") || expected.startsWith("資訊")))) {
+      return { ok: false, err: `班級「${data.class}」與學號 ${data.student_id} 推斷的「${expected}」不一致，請確認後再送出。` };
+    }
+    // 手機格式
+    if (!/^09\d{8}$/.test(String(data.parent_phone || ""))) {
+      return { ok: false, err: "家長手機格式錯誤：請填寫 09 開頭共 10 碼。" };
+    }
+    return { ok: true, normalizedClass: normCls };
   }
-  // 家長姓名 ≠ 學生姓名
-  const sn = String(data.student_name || "").trim();
-  const pn = String(data.parent_name  || "").trim();
-  if (sn && pn && sn === pn) {
-    return { ok: false, err: "家長姓名不可與學生姓名相同，請由家長親自填寫。" };
+
+  // A006 教職員工驗證：簡化為「姓名、單位、手機」三必填
+  if (!String(data.student_name || "").trim()) {
+    return { ok: false, err: "請填寫姓名。" };
   }
-  // 班級：去除前綴後不可為空
-  const normCls = normalizeClass(data.class);
-  if (!normCls) {
-    return { ok: false, err: "班級欄位請填寫完整（例：商二忠）。" };
+  if (!String(data.class || "").trim()) {
+    return { ok: false, err: "請填寫單位／部門。" };
   }
-  // 班級科別與學號是否一致（學號→科年級）
-  const expected = inferDeptFromStudentId(data.student_id);
-  if (expected && !normCls.startsWith(expected) && !(/^資[一二三]/.test(normCls) && (expected.startsWith("資處") || expected.startsWith("資訊")))) {
-    return { ok: false, err: `班級「${data.class}」與學號 ${data.student_id} 推斷的「${expected}」不一致，請確認後再送出。` };
-  }
-  // 手機格式
   if (!/^09\d{8}$/.test(String(data.parent_phone || ""))) {
-    return { ok: false, err: "家長手機格式錯誤：請填寫 09 開頭共 10 碼。" };
+    return { ok: false, err: "聯絡手機格式錯誤：請填寫 09 開頭共 10 碼。" };
   }
-  return { ok: true, normalizedClass: normCls };
+  return { ok: true, normalizedClass: String(data.class).trim() };
 }
 
 /* ---------- 表單送出 ---------- */
@@ -210,6 +227,20 @@ function attachStudentIdHint() {
   };
   sidInput.addEventListener("input", update);
   clsInput.addEventListener("input", () => { clsInput.dataset.userTouched = "1"; });
+}
+
+/* ---------- 家長陪同：展開／收合 ---------- */
+function toggleAccompany(show) {
+  const block = document.getElementById("accompanyBlock");
+  if (!block) return;
+  block.style.display = show ? "block" : "none";
+  // 收合時清空欄位，避免使用者改回「否」後仍夾帶舊值送出
+  if (!show) {
+    block.querySelectorAll("input, select").forEach(el => {
+      if (el.type === "text") el.value = "";
+      else if (el.tagName === "SELECT") el.selectedIndex = 0;
+    });
+  }
 }
 
 document.addEventListener("DOMContentLoaded", () => {

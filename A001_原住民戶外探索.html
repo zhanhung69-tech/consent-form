@@ -3,166 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>A001 原住民族及僑生戶外探索課程 家長同意書 - 樹人家商</title>
+<title>A001 原住民族及僑生戶外探索課程 - 活動已結束</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#f3f4f6;color:#222;line-height:1.7;padding:16px}
-  .wrap{max-width:780px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.08);overflow:hidden}
-  header{background:linear-gradient(135deg,#2b6cb0,#1a4d8c);color:#fff;padding:24px 20px;text-align:center}
-  header h1{font-size:22px;margin-bottom:6px}
-  header h2{font-size:15px;font-weight:400;opacity:.95}
-  header .sys{font-size:13px;margin-top:8px;opacity:.85}
-  .body{padding:20px}
-  h3{color:#1a4d8c;border-left:5px solid #2b6cb0;padding-left:10px;margin:18px 0 10px;font-size:17px}
-  p{margin-bottom:10px}
-  .greet{background:#eef5ff;border-radius:8px;padding:14px;margin-bottom:12px;font-size:14.5px}
-  .info-table{width:100%;border-collapse:collapse;margin:10px 0 18px;font-size:14.5px}
-  .info-table th,.info-table td{border:1px solid #d0d7de;padding:10px;text-align:left;vertical-align:top}
-  .info-table th{background:#f6f8fa;width:110px;color:#1a4d8c;font-weight:600}
-  .notes{background:#fff8e1;border-left:4px solid #f5b301;padding:12px 14px;border-radius:6px;margin:12px 0;font-size:14px}
-  .notes li{margin-left:18px;margin-bottom:4px}
-  form{margin-top:16px}
-  .field{margin-bottom:14px}
-  label{display:block;font-weight:600;margin-bottom:6px;color:#333;font-size:14.5px}
-  label .req{color:#d93025}
-  input[type=text],input[type=tel],input[type=number],textarea,select{
-    width:100%;padding:10px 12px;border:1px solid #cbd5e0;border-radius:6px;font-size:15px;font-family:inherit;background:#fff
-  }
-  input:focus,textarea:focus,select:focus{outline:none;border-color:#2b6cb0;box-shadow:0 0 0 3px rgba(43,108,176,.15)}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-  @media(max-width:560px){.row,.row3{grid-template-columns:1fr}}
-  .radio-group{display:flex;gap:16px;flex-wrap:wrap;padding:8px 0}
-  .radio-group label{font-weight:400;display:flex;align-items:center;gap:6px;margin:0;cursor:pointer}
-  .sig-box{border:2px dashed #2b6cb0;border-radius:8px;background:#fafbfd;position:relative}
-  canvas{display:block;width:100%;height:180px;border-radius:6px;touch-action:none;cursor:crosshair}
-  .sig-btns{display:flex;gap:8px;padding:8px;border-top:1px solid #e2e8f0;background:#f6f8fa}
-  .sig-btns button{padding:6px 14px;background:#fff;border:1px solid #cbd5e0;border-radius:5px;cursor:pointer;font-size:13px}
-  .sig-btns button:hover{background:#eef5ff}
-  .consent{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px;margin:14px 0}
-  .consent label{font-weight:400;display:flex;align-items:flex-start;gap:8px;cursor:pointer;font-size:14.5px}
-  .submit-btn{width:100%;padding:14px;background:#2b6cb0;color:#fff;border:none;border-radius:8px;font-size:17px;font-weight:700;cursor:pointer;margin-top:10px}
-  .submit-btn:hover{background:#1a4d8c}
-  .submit-btn:disabled{background:#9ca3af;cursor:not-allowed}
-  footer{text-align:center;padding:16px;font-size:13px;color:#555;background:#f6f8fa;border-top:1px solid #e2e8f0}
-  .msg{display:none;padding:14px;border-radius:8px;margin:12px 0;text-align:center;font-weight:600}
-  .msg.ok{display:block;background:#d1fae5;color:#065f46}
-  .msg.err{display:block;background:#fee2e2;color:#991b1b}
-  .badge{display:inline-block;background:#2b6cb0;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;margin-right:6px}
+  body{font-family:"Microsoft JhengHei","PingFang TC",sans-serif;background:#f3f4f6;color:#222;line-height:1.7;padding:20px;min-height:100vh;display:flex;align-items:center;justify-content:center}
+  .wrap{max-width:560px;width:100%;background:#fff;border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.08);overflow:hidden}
+  header{background:linear-gradient(135deg,#6b7280,#4b5563);color:#fff;padding:28px 20px;text-align:center}
+  header .icon{font-size:48px;margin-bottom:8px}
+  header h1{font-size:20px;margin-bottom:6px}
+  header .sub{font-size:13px;opacity:.9}
+  .body{padding:28px 24px;text-align:center}
+  .status{display:inline-block;background:#fef2f2;color:#991b1b;padding:8px 18px;border-radius:20px;font-size:14px;font-weight:600;margin-bottom:18px;border:1px solid #fecaca}
+  .info{background:#f9fafb;border-radius:8px;padding:16px;margin:14px 0;text-align:left;font-size:14.5px;line-height:1.9}
+  .info strong{color:#4b5563;display:inline-block;min-width:80px}
+  .msg{color:#374151;font-size:15px;margin:18px 0}
+  .actions{margin-top:22px}
+  .btn{display:inline-block;background:#2b6cb0;color:#fff;padding:11px 22px;border-radius:8px;text-decoration:none;font-weight:600;font-size:14.5px;margin:0 4px}
+  .btn:hover{background:#1a4d8c}
+  .btn.gray{background:#9ca3af}
+  .btn.gray:hover{background:#6b7280}
+  footer{text-align:center;padding:14px;font-size:12.5px;color:#666;background:#f6f8fa;border-top:1px solid #e2e8f0}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="sys">樹人家商 活動家長同意書 線上簽核系統</div>
-    <h1>114 學年度第 2 學期<br>原住民族及僑生戶外探索課程</h1>
-    <h2><span class="badge">A001</span>校外戶外體驗</h2>
+    <div class="icon">🔒</div>
+    <h1>本活動同意書已結束簽核</h1>
+    <div class="sub">樹人家商 活動家長同意書 線上簽核系統</div>
   </header>
 
   <div class="body">
-    <p class="greet">
-      <strong>敬愛的家長您好：</strong><br>
-      感謝您長期以來對孩子教育的支持與配合。本校將舉辦下列活動，為保障學生權益及確認家長知悉，敬請詳閱後完成線上簽核，謝謝。
-    </p>
+    <div class="status">⏰ 簽核期間已截止</div>
 
-    <h3>活動資訊</h3>
-    <table class="info-table">
-      <tr><th>活動類型</th><td>校外戶外體驗</td></tr>
-      <tr><th>活動日期</th><td>115 年 4 月 28 日（星期二）12:40-15:30（雨天順延至 5/5）</td></tr>
-      <tr><th>活動地點</th><td>樹林區鹿角溪原住民主題部落公園</td></tr>
-      <tr><th>參加對象</th><td>本校原住民族學生及僑生，共計約 150 人</td></tr>
-      <tr><th>活動內容</th><td>採四站式輪轉教學：<br>(A) 水的取得及淨化　(B) 打火石生火<br>(C) 鑽木取火　(D) 實用繩結技術</td></tr>
-      <tr><th>交通方式</th><td>步行前往 / 遊覽車接駁（依實際動線）</td></tr>
-      <tr><th>安全措施</th><td>健康中心護理師隨行，備急救箱及 AED；用火站配置滅火器；混合編組，每組導師 2 名、安全協助員 1 名</td></tr>
-      <tr><th>費用</th><td>免費</td></tr>
-      <tr><th>服裝提醒</th><td>請穿著運動服、運動鞋；自備水壺、帽子、防蚊用品</td></tr>
-      <tr><th>簽核截止</th><td style="color:#d93025;font-weight:600">115 年 4 月 23 日（星期四）23:59 前（活動前 5 日）</td></tr>
-    </table>
-
-    <div class="notes">
-      <strong>重要須知：</strong>
-      <ul>
-        <li>本活動參加學生均具備學生平安保險，校方並視活動性質加保相關保險。</li>
-        <li>若學生有特殊體質、慢性病、過敏史或近期身體不適，請於下方備註欄詳實填寫。</li>
-        <li>活動期間如遇緊急狀況，學校將立即聯繫緊急聯絡人並協助送醫。</li>
-        <li>本表資料僅供本次活動管理使用，依個資法規定妥善保管，活動結束後銷毀。</li>
-      </ul>
+    <div class="info">
+      <div><strong>活動名稱：</strong>原住民族及僑生戶外探索課程</div>
+      <div><strong>活動日期：</strong>115 年 4 月 28 日（已舉辦完畢）</div>
+      <div><strong>活動地點：</strong>樹林區鹿角溪原住民主題部落公園</div>
+      <div><strong>簽核截止：</strong>115 年 4 月 23 日 23:59</div>
     </div>
 
-    <form id="consentForm" onsubmit="return submitForm(event)">
-      <input type="hidden" name="activity_id" value="A001">
-      <input type="hidden" name="activity_name" value="114學年度第2學期原住民族及僑生戶外探索課程">
+    <div class="msg">
+      本活動之家長同意書線上簽核已結束，本頁不再受理新的簽核資料。<br>
+      若有相關需求，請洽 <strong>學務處 02-2681-6658</strong>。
+    </div>
 
-      <h3>學生資訊</h3>
-      <div class="row">
-        <div class="field"><label>班級 <span class="req">*</span></label><input type="text" name="class" required placeholder="例：商二忠（不必填高一/高二）"></div>
-        <div class="field"><label>座號 <span class="req">*</span></label><input type="number" name="seat" required min="1" max="60"></div>
-      </div>
-      <div class="row">
-        <div class="field"><label>學生姓名 <span class="req">*</span></label><input type="text" name="student_name" required></div>
-        <div class="field"><label>學號 <span class="req">*</span></label><input type="text" name="student_id" required></div>
-      </div>
-
-      <h3>家長資訊</h3>
-      <div class="row">
-        <div class="field"><label>家長姓名 <span class="req">*</span></label><input type="text" name="parent_name" required></div>
-        <div class="field">
-          <label>與學生關係 <span class="req">*</span></label>
-          <select name="relation" required>
-            <option value="">請選擇</option><option>父親</option><option>母親</option>
-            <option>祖父</option><option>祖母</option><option>法定監護人</option><option>其他</option>
-          </select>
-        </div>
-      </div>
-      <div class="row">
-        <div class="field"><label>家長手機 <span class="req">*</span></label><input type="tel" name="parent_phone" required pattern="09[0-9]{8}" placeholder="09xxxxxxxx"></div>
-        <div class="field"><label>備用電話</label><input type="tel" name="backup_phone" placeholder="住家或其他聯絡電話"></div>
-      </div>
-
-      <h3>健康狀況</h3>
-      <div class="field"><label>特殊體質 / 慢性病</label><textarea name="health_condition" rows="2" placeholder="如：氣喘、心臟病等；若無請填「無」"></textarea></div>
-      <div class="field"><label>藥物過敏史</label><textarea name="allergy" rows="2" placeholder="如：磺胺類藥物過敏；若無請填「無」"></textarea></div>
-      <div class="field"><label>近期身體狀況</label><textarea name="recent_status" rows="2" placeholder="近期是否感冒、受傷或其他不適；若無請填「無」"></textarea></div>
-
-      <h3>同意事項</h3>
-      <div class="field">
-        <label>是否同意參加本活動 <span class="req">*</span></label>
-        <div class="radio-group">
-          <label><input type="radio" name="consent" value="同意" required> □ 同意</label>
-          <label><input type="radio" name="consent" value="不同意"> □ 不同意</label>
-        </div>
-      </div>
-
-      <input type="hidden" name="transport" value="步行前往／遊覽車接駁（學校統一安排）">
-
-      <h3>家長電子簽名</h3>
-      <p style="font-size:13.5px;color:#555;margin-bottom:8px">請於下方框內以滑鼠或手指親筆簽名：</p>
-      <div class="sig-box">
-        <canvas id="sigPad"></canvas>
-        <div class="sig-btns">
-          <button type="button" onclick="clearSig()">清除重簽</button>
-          <span style="font-size:12px;color:#666;align-self:center">※ 簽名將以圖片形式儲存</span>
-        </div>
-      </div>
-
-      <div class="consent">
-        <label>
-          <input type="checkbox" id="agreeCheck" required>
-          <span>本人已詳閱上述活動說明與注意事項，確認簽名屬實，並同意依個資法規定處理本表資料。</span>
-        </label>
-      </div>
-
-      <div id="msg" class="msg"></div>
-      <button type="submit" class="submit-btn" id="submitBtn">送出簽核</button>
-    </form>
+    <div class="actions">
+      <a href="index.html" class="btn">查看其他活動</a>
+      <a href="javascript:window.close()" class="btn gray">關閉本頁</a>
+    </div>
   </div>
 
   <footer>
-    敬祝 平安健康　樹人家商 學務處 敬上<br>
-    新北市私立樹人高級家事商業職業學校　電話：02-2681-6658
+    新北市私立樹人高級家事商業職業學校　樹人家商 學務處
   </footer>
 </div>
-
-<script src="common.js"></script>
 </body>
 </html>
