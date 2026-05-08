@@ -127,6 +127,61 @@ function validateForm(data) {
   return { ok: true, normalizedClass: String(data.class).trim() };
 }
 
+/* ---------- 全屏成功 / 失敗提示（無法忽視） ---------- */
+function showFullscreenResult(type, title, detail) {
+  const isOk = (type === "ok");
+  const overlay = document.createElement("div");
+  overlay.id = "resultOverlay";
+  overlay.style.cssText = `
+    position:fixed;inset:0;z-index:99999;
+    background:rgba(0,0,0,.55);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;animation:fadeIn .25s ease;
+  `;
+  const iconColor = isOk ? "#059669" : "#dc2626";
+  const bgColor   = isOk ? "#d1fae5" : "#fee2e2";
+  const headColor = isOk ? "#047857" : "#991b1b";
+  overlay.innerHTML = `
+    <style>
+      @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+      @keyframes pop{0%{transform:scale(.7)}80%{transform:scale(1.05)}100%{transform:scale(1)}}
+      #resultBox{animation:pop .35s ease}
+    </style>
+    <div id="resultBox" style="
+      max-width:420px;width:100%;background:#fff;border-radius:16px;
+      box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden;
+      font-family:'Microsoft JhengHei','PingFang TC',sans-serif;text-align:center;">
+      <div style="background:${bgColor};padding:30px 20px 20px;">
+        <div style="
+          width:80px;height:80px;border-radius:50%;background:${iconColor};
+          color:#fff;font-size:48px;line-height:80px;margin:0 auto 14px;
+          box-shadow:0 4px 16px ${iconColor}40;">${isOk ? "✓" : "✗"}</div>
+        <h2 style="color:${headColor};font-size:22px;margin:0;">${title}</h2>
+      </div>
+      <div style="padding:24px 24px 18px;color:#374151;font-size:15px;line-height:1.7;">
+        ${detail}
+      </div>
+      <div style="padding:0 20px 20px;">
+        ${isOk
+          ? `<button onclick="window.close();document.getElementById('resultOverlay').remove();"
+                style="width:100%;padding:13px;background:#059669;color:#fff;border:none;
+                       border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;">
+                ✓ 知道了，關閉本頁
+             </button>`
+          : `<button onclick="document.getElementById('resultOverlay').remove();"
+                style="width:100%;padding:13px;background:#dc2626;color:#fff;border:none;
+                       border-radius:10px;font-size:16px;font-weight:700;cursor:pointer;">
+                返回修改
+             </button>`
+        }
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  // 防止背景滑動
+  document.body.style.overflow = "hidden";
+}
+
 /* ---------- 表單送出 ---------- */
 async function submitForm(e) {
   e.preventDefault();
@@ -139,11 +194,13 @@ async function submitForm(e) {
   if (!hasSignature) {
     msg.className = "msg err";
     msg.textContent = "請先於簽名框內親筆簽名。";
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     return false;
   }
   if (!document.getElementById("agreeCheck").checked) {
     msg.className = "msg err";
     msg.textContent = "請勾選下方確認同意欄位。";
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     return false;
   }
 
@@ -157,42 +214,54 @@ async function submitForm(e) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     return false;
   }
-  data.class = v.normalizedClass;  // 寫入正規化後的班級
+  data.class = v.normalizedClass;
 
   data.signature_image = sigCanvas.toDataURL("image/png");
   data.submit_time     = new Date().toISOString();
 
   btn.disabled = true;
-  btn.textContent = "送出中…請稍候";
+  btn.textContent = "送出中…請稍候 ⏳";
 
   try {
-    // 改用 cors 模式才能讀取後端回傳的錯誤訊息（重複/班級不符等）
     const resp = await fetch(GAS_ENDPOINT, {
       method: "POST",
       mode:   "cors",
       redirect: "follow",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },  // text/plain 不會觸發 CORS preflight
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(data)
     });
     let result = { ok: true };
-    try { result = await resp.json(); } catch (_) { /* 若解析失敗則視為成功 */ }
+    try { result = await resp.json(); } catch (_) { /* 若無法解析,視為成功 */ }
 
     if (result.ok === false) {
-      msg.className = "msg err";
-      msg.textContent = "✗ " + (result.message || "送出被伺服器拒絕，請確認資料後重試。");
+      // 後端回報錯誤
+      showFullscreenResult("err", "送出失敗",
+        `<strong style="color:#dc2626">${result.message || "伺服器拒絕了您的資料"}</strong><br><br>
+         請依照訊息修正後重新送出，<br>
+         或聯絡學務處 <strong>02-2681-6658</strong>。`);
       btn.disabled = false;
       btn.textContent = "送出簽核";
-      window.scrollTo({ top: 0, behavior: "smooth" });
       return false;
     }
-    msg.className = "msg ok";
-    msg.innerHTML = "✓ 簽核完成，感謝您的配合！<br><span style='font-size:13px;font-weight:400'>本頁可直接關閉。</span>";
+
+    // 成功 — 顯示全屏成功訊息
+    const studentName = String(data.student_name || "").trim();
+    const activityName = String(data.activity_name || "").trim();
+    showFullscreenResult("ok", "簽核已完成！",
+      `<strong style="color:#047857;font-size:17px">感謝您的配合 🙏</strong><br><br>
+       ${studentName ? `<span style="background:#ecfdf5;padding:4px 10px;border-radius:14px;font-size:14px">姓名：${studentName}</span><br><br>` : ""}
+       您的同意書已成功送出至校方系統，<br>
+       資料已記錄完成。本頁可直接關閉。<br><br>
+       <span style="color:#888;font-size:13px">${new Date().toLocaleString("zh-TW")}</span>`);
+
     btn.textContent = "✓ 已送出";
     form.querySelectorAll("input, textarea, select, button").forEach(el => el.disabled = true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (err) {
-    msg.className = "msg err";
-    msg.textContent = "送出失敗：" + err.message + "，請稍後再試或聯絡學務處 02-2681-6658。";
+    showFullscreenResult("err", "送出失敗",
+      `<strong style="color:#dc2626">網路連線異常</strong><br><br>
+       <span style="font-size:13px;color:#666">${err.message || "未知錯誤"}</span><br><br>
+       請檢查網路後重新送出，<br>
+       或聯絡學務處 <strong>02-2681-6658</strong>。`);
     btn.disabled = false;
     btn.textContent = "送出簽核";
   }
